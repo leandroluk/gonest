@@ -6,8 +6,16 @@ import (
 	"strings"
 )
 
-// Schema defines validation rules for a type
-type Schema[T any] struct {
+// Schema creates a validation schema using a cleaner callback API
+func Schema[T any](callback func(*T, *SchemaBuilder[T])) *SchemaType[T] {
+	var instance T
+	builder := NewSchema(&instance)
+	callback(&instance, builder)
+	return builder.Build()
+}
+
+// SchemaType defines validation rules for a type
+type SchemaType[T any] struct {
 	fields          []fieldValidator[T]
 	crossValidators []func(*T) *FieldError
 	async           bool
@@ -22,7 +30,7 @@ type fieldValidator[T any] interface {
 
 // SchemaBuilder builds validation schemas in a type-safe way
 type SchemaBuilder[T any] struct {
-	schema     *Schema[T]
+	schema     *SchemaType[T]
 	structType reflect.Type
 	instance   *T
 }
@@ -40,7 +48,7 @@ func NewSchema[T any](instance *T) *SchemaBuilder[T] {
 	}
 
 	return &SchemaBuilder[T]{
-		schema: &Schema[T]{
+		schema: &SchemaType[T]{
 			fields:          make([]fieldValidator[T], 0),
 			crossValidators: make([]func(*T) *FieldError, 0),
 		},
@@ -273,12 +281,12 @@ func (sb *SchemaBuilder[T]) CrossField(validator func(*T) *FieldError) *SchemaBu
 }
 
 // Build creates the final schema
-func (sb *SchemaBuilder[T]) Build() *Schema[T] {
+func (sb *SchemaBuilder[T]) Build() *SchemaType[T] {
 	return sb.schema
 }
 
 // Validate validates a value against the schema
-func (s *Schema[T]) Validate(value *T) *ValidationResult {
+func (s *SchemaType[T]) Validate(value *T) *ValidationResult {
 	result := NewValidationResult()
 
 	for _, field := range s.fields {
@@ -297,7 +305,7 @@ func (s *Schema[T]) Validate(value *T) *ValidationResult {
 }
 
 // ValidateAsync validates a value asynchronously
-func (s *Schema[T]) ValidateAsync(ctx context.Context, value *T) *ValidationResult {
+func (s *SchemaType[T]) ValidateAsync(ctx context.Context, value *T) *ValidationResult {
 	result := NewValidationResult()
 
 	for _, field := range s.fields {
@@ -316,6 +324,6 @@ func (s *Schema[T]) ValidateAsync(ctx context.Context, value *T) *ValidationResu
 }
 
 // HasAsync returns whether the schema has async validators
-func (s *Schema[T]) HasAsync() bool {
+func (s *SchemaType[T]) HasAsync() bool {
 	return s.async
 }

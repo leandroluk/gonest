@@ -146,7 +146,13 @@ func AdvancedValidationExamples() {
 	usernameAsyncValidator := validator.Field[string]("username").
 		Is(rules.Required[string]()).
 		IsAsync(rules.AsyncCustom(
-			func(ctx context.Context, val string) (bool, error) { return val == "taken", nil },
+			func(ctx context.Context, val string) (bool, error) {
+				time.Sleep(50 * time.Millisecond)
+				if val == "taken" {
+					return false, nil // Invalid
+				}
+				return true, nil // Valid
+			},
 			"username_taken",
 			"Username is already taken",
 		))
@@ -171,12 +177,11 @@ type UpdateUserDto struct {
 	Age   int    `json:"age"`
 }
 
-var updateUserSchema *validator.Schema[UpdateUserDto]
-
-func init() {
-	var dto UpdateUserDto
-	builder := validator.NewSchema(&dto)
-
+// Using clean callback API
+var updateUserSchema = validator.Schema(func(
+	dto *UpdateUserDto,
+	builder *validator.SchemaBuilder[UpdateUserDto],
+) {
 	builder.Field(&dto.Name,
 		rules.Required[string](),
 		rules.MinLength(2),
@@ -191,14 +196,13 @@ func init() {
 		rules.Min(18),
 		rules.Max(120),
 	)
-
-	updateUserSchema = builder.Build()
-}
+})
 
 func SchemaValidationExamples() {
 	fmt.Println("========================================")
 	fmt.Println("PART 3: Schema Validation")
-	fmt.Println("========================================\n")
+	fmt.Println("========================================")
+	fmt.Println()
 
 	fmt.Println("1. Valid DTO:")
 	validDto := &UpdateUserDto{
@@ -241,31 +245,30 @@ type RegisterDto struct {
 }
 
 func (dto *RegisterDto) Validate() *validator.ValidationResult {
-	var temp RegisterDto
-	builder := validator.NewSchema(&temp)
+	schema := validator.Schema(func(d *RegisterDto, builder *validator.SchemaBuilder[RegisterDto]) {
+		builder.Field(&d.Email,
+			rules.Required[string](),
+			rules.Email(),
+		)
 
-	builder.Field(&temp.Email,
-		rules.Required[string](),
-		rules.Email(),
-	)
+		builder.Field(&d.Password,
+			rules.Required[string](),
+			rules.StrongPassword(),
+		)
 
-	builder.Field(&temp.Password,
-		rules.Required[string](),
-		rules.StrongPassword(),
-	)
+		builder.Field(&d.Age,
+			rules.Min(18),
+		)
+	})
 
-	builder.Field(&temp.Age,
-		rules.Min(18),
-	)
-
-	schema := builder.Build()
 	return schema.Validate(dto)
 }
 
 func PipesIntegrationExamples() {
 	fmt.Println("========================================")
 	fmt.Println("PART 4: Pipes Integration")
-	fmt.Println("========================================\n")
+	fmt.Println("========================================")
+	fmt.Println()
 
 	fmt.Println("1. ParseIntPipe:")
 	intPipe := pipes.NewParseIntPipe()
@@ -347,7 +350,8 @@ func NewValidationController() controller.Controller {
 func ControllerIntegrationExample() {
 	fmt.Println("========================================")
 	fmt.Println("PART 5: Controller Integration")
-	fmt.Println("========================================\n")
+	fmt.Println("========================================")
+	fmt.Println()
 
 	ctrl := NewValidationController()
 
@@ -369,7 +373,8 @@ func ControllerIntegrationExample() {
 func main() {
 	fmt.Println("\n╔════════════════════════════════════════╗")
 	fmt.Println("║  GoNest Complete Validation Examples  ║")
-	fmt.Println("╚════════════════════════════════════════╝\n")
+	fmt.Println("╚════════════════════════════════════════╝")
+	fmt.Println()
 
 	BasicValidationExamples()
 	AdvancedValidationExamples()
@@ -390,5 +395,5 @@ func main() {
 	fmt.Println("✓ ValidationPipe integration")
 	fmt.Println("✓ Controller integration")
 	fmt.Println("✓ Type-safe & composable")
-	fmt.Println("========================================\n")
+	fmt.Println("========================================")
 }
