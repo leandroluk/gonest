@@ -1,7 +1,9 @@
 # GoNest Framework
 
 <p align="center">
-<a href="[https://gonest.dev/](https://www.google.com/search?q=https://gonest.dev/)" target="blank"><img src="[https://i.imgur.com/your-logo-here.png](https://www.google.com/search?q=https://i.imgur.com/your-logo-here.png)" width="120" alt="GoNest Logo" /></a>
+  <a href="https://gonest.dev/" target="blank">
+    <img src=".public/icon.svg" width="120" alt="GoNest Logo">
+  </a>
 </p>
 
 A NestJS-inspired framework for **Go** designed for building efficient, reliable, and scalable server-side applications. It leverages Go's performance and type safety while providing a familiar architectural pattern for developers coming from the NestJS ecosystem.
