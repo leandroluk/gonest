@@ -9,26 +9,26 @@ import (
 type MetadataKey string
 
 const (
-	// MetadataKeyController marks a type as a controller
-	MetadataKeyController MetadataKey = "controller"
+	// MetadataKeyCONTROLLER marks a type as a controller
+	MetadataKeyCONTROLLER MetadataKey = "controller"
 
-	// MetadataKeyRoute stores route information
-	MetadataKeyRoute MetadataKey = "route"
+	// MetadataKeyROUTE stores route information
+	MetadataKeyROUTE MetadataKey = "route"
 
-	// MetadataKeyGuard stores guard information
-	MetadataKeyGuard MetadataKey = "guard"
+	// MetadataKeyGUARD stores guard information
+	MetadataKeyGUARD MetadataKey = "guard"
 
-	// MetadataKeyInterceptor stores interceptor information
-	MetadataKeyInterceptor MetadataKey = "interceptor"
+	// MetadataKeyINTERCEPTOR stores interceptor information
+	MetadataKeyINTERCEPTOR MetadataKey = "interceptor"
 
-	// MetadataKeyPipe stores pipe information
-	MetadataKeyPipe MetadataKey = "pipe"
+	// MetadataKeyPIPE stores pipe information
+	MetadataKeyPIPE MetadataKey = "pipe"
 
-	// MetadataKeyParam stores parameter information
-	MetadataKeyParam MetadataKey = "param"
+	// MetadataKeyPARAM stores parameter information
+	MetadataKeyPARAM MetadataKey = "param"
 
-	// MetadataKeySwagger stores swagger documentation
-	MetadataKeySwagger MetadataKey = "swagger"
+	// MetadataKeySWAGGER stores swagger documentation
+	MetadataKeySWAGGER MetadataKey = "swagger"
 )
 
 // MetadataStorage stores metadata for types

@@ -43,16 +43,16 @@ Create a production-ready, type-safe, and developer-friendly framework for build
   - [x] Provider registration
   - [x] Dependency resolution (basic)
   - [x] Manual injection via module configuration
-- [ ] Scopes system (deferred to Phase 2)
-  - [ ] Singleton scope
-  - [ ] Transient scope
-  - [ ] Request scope
-- [ ] Provider types (deferred to advanced DI)
-  - [ ] Class providers
-  - [ ] Value providers
-  - [ ] Factory providers
-  - [ ] Async providers
-- [ ] Circular dependency handling (basic detection implemented)
+- [x] Scopes system (deferred to Phase 2)
+  - [x] Singleton scope
+  - [x] Transient scope
+  - [x] Request scope
+- [x] Provider types (deferred to advanced DI)
+  - [x] Class providers
+  - [x] Value providers
+  - [x] Factory providers
+  - [x] Async providers
+- [x] Circular dependency handling (basic detection implemented)
 
 ### Context System
 - [x] Request context implementation

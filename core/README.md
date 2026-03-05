@@ -29,8 +29,8 @@ import "github.com/leandroluk/gonest/core"
 type AppModule struct{}
 
 func (m *AppModule) Configure(b *core.ModuleBuilder) {
-    b.Controllers(&AppController{}).
-      Providers(&AppService{})
+  b.Controllers(&AppController{}).
+    Providers(&AppService{})
 }
 ```
 
@@ -40,13 +40,13 @@ func (m *AppModule) Configure(b *core.ModuleBuilder) {
 type AppService struct{}
 
 func (s *AppService) GetHello() string {
-    return "Hello from GoNest!"
+  return "Hello from GoNest!"
 }
 
 // Lifecycle hook (optional)
 func (s *AppService) OnModuleInit(ctx context.Context) error {
-    log.Println("Service initialized")
-    return nil
+  log.Println("Service initialized")
+  return nil
 }
 ```
 
@@ -54,51 +54,34 @@ func (s *AppService) OnModuleInit(ctx context.Context) error {
 
 ```go
 type AppController struct {
-    appService *AppService
+  appService *AppService
 }
 
 func (c *AppController) Routes() []core.RouteDefinition {
-    return []core.RouteDefinition{
-        {
-            Method:  "GET",
-            Path:    "/",
-            Handler: c.GetHello,
-        },
-        {
-            Method:  "GET",
-            Path:    "/user/:id",
-            Handler: c.GetUser,
-        },
-        {
-            Method:  "POST",
-            Path:    "/user",
-            Handler: c.CreateUser,
-        },
-    }
+  return []core.RouteDefinition{
+    { Method:  "GET", Path:  "/", Handler: c.GetHello },
+    { Method:  "GET", Path:  "/user/:id", Handler: c.GetUser },
+    { Method:  "POST", Path:  "/user", Handler: c.CreateUser },
+  }
 }
 
 func (c *AppController) GetHello(ctx *core.Context) error {
-    message := c.appService.GetHello()
-    return ctx.JSON(200, map[string]string{
-        "message": message,
-    })
+  message := c.appService.GetHello()
+  return ctx.JSON(200, map[string]string{"message": message})
 }
 
 func (c *AppController) GetUser(ctx *core.Context) error {
-    id := ctx.Param("id")
-    return ctx.JSON(200, map[string]string{
-        "id": id,
-        "name": "User " + id,
-    })
+  id := ctx.Param("id")
+  return ctx.JSON(200, map[string]string{"id": id, "name": "User " + id})
 }
 
 func (c *AppController) CreateUser(ctx *core.Context) error {
-    var dto CreateUserDto
-    if err := ctx.BindJSON(&dto); err != nil {
-        return ctx.JSON(400, map[string]string{"error": "Invalid body"})
-    }
-    
-    return ctx.JSON(201, dto)
+  var dto CreateUserDto
+  if err := ctx.BindJSON(&dto); err != nil {
+    return ctx.JSON(400, map[string]string{"error": "Invalid body"})
+  }
+  
+  return ctx.JSON(201, dto)
 }
 ```
 
@@ -106,11 +89,11 @@ func (c *AppController) CreateUser(ctx *core.Context) error {
 
 ```go
 func main() {
-    app := core.NestFactory{}.Create(&AppModule{})
-    
-    if err := app.Listen(":3000"); err != nil {
-        log.Fatal(err)
-    }
+  app := core.NestFactory{}.Create(&AppModule{})
+  
+  if err := app.Listen(":3000"); err != nil {
+    log.Fatal(err)
+  }
 }
 ```
 
@@ -122,8 +105,8 @@ func main() {
 type UserModule struct{}
 
 func (m *UserModule) Configure(b *core.ModuleBuilder) {
-    b.Controllers(&UserController{}).
-      Providers(&UserService{}, &UserRepository{})
+  b.Controllers(&UserController{}).
+    Providers(&UserService{}, &UserRepository{})
 }
 ```
 
@@ -133,9 +116,9 @@ func (m *UserModule) Configure(b *core.ModuleBuilder) {
 type AppModule struct{}
 
 func (m *AppModule) Configure(b *core.ModuleBuilder) {
-    b.Imports(&UserModule{}, &AuthModule{}).
-      Controllers(&AppController{}).
-      Providers(&AppService{})
+  b.Imports(&UserModule{}, &AuthModule{}).
+    Controllers(&AppController{}).
+    Providers(&AppService{})
 }
 ```
 
@@ -145,8 +128,8 @@ func (m *AppModule) Configure(b *core.ModuleBuilder) {
 type SharedModule struct{}
 
 func (m *SharedModule) Configure(b *core.ModuleBuilder) {
-    b.Providers(&SharedService{}).
-      Exports(&SharedService{})  // Make available to importing modules
+  b.Providers(&SharedService{}).
+    Exports(&SharedService{})  // Make available to importing modules
 }
 ```
 
@@ -158,7 +141,7 @@ Called when the module is initialized, after dependencies are resolved.
 
 ```go
 func (s *DatabaseService) OnModuleInit(ctx context.Context) error {
-    return s.Connect()
+  return s.Connect()
 }
 ```
 
@@ -168,7 +151,7 @@ Called after all modules are initialized.
 
 ```go
 func (s *CacheService) OnApplicationBootstrap(ctx context.Context) error {
-    return s.WarmupCache()
+  return s.WarmupCache()
 }
 ```
 
@@ -178,7 +161,7 @@ Called when the module is being destroyed.
 
 ```go
 func (s *DatabaseService) OnModuleDestroy(ctx context.Context) error {
-    return s.Disconnect()
+  return s.Disconnect()
 }
 ```
 
@@ -188,7 +171,7 @@ Called before the application shuts down.
 
 ```go
 func (s *QueueService) OnApplicationShutdown(ctx context.Context) error {
-    return s.FlushQueue()
+  return s.FlushQueue()
 }
 ```
 
@@ -200,24 +183,24 @@ The `Context` provides a unified interface for handling HTTP requests:
 
 ```go
 func (c *Controller) Handler(ctx *core.Context) error {
-    // Path parameters
-    id := ctx.Param("id")
-    
-    // Query parameters
-    page := ctx.Query("page")
-    limit := ctx.QueryDefault("limit", "10")
-    
-    // Headers
-    auth := ctx.Header("Authorization")
-    
-    // JSON body
-    var dto CreateDto
-    if err := ctx.BindJSON(&dto); err != nil {
-        return err
-    }
-    
-    // Raw body
-    body, err := ctx.Body()
+  // Path parameters
+  id := ctx.Param("id")
+  
+  // Query parameters
+  page := ctx.Query("page")
+  limit := ctx.QueryDefault("limit", "10")
+  
+  // Headers
+  auth := ctx.Header("Authorization")
+  
+  // JSON body
+  var dto CreateDto
+  if err := ctx.BindJSON(&dto); err != nil {
+    return err
+  }
+  
+  // Raw body
+  body, err := ctx.Body()
 }
 ```
 
@@ -260,13 +243,13 @@ count := ctx.GetInt("count")
 
 ```go
 func (c *Controller) Routes() []core.RouteDefinition {
-    return []core.RouteDefinition{
-        {Method: "GET", Path: "/users", Handler: c.GetUsers},
-        {Method: "POST", Path: "/users", Handler: c.CreateUser},
-        {Method: "GET", Path: "/users/:id", Handler: c.GetUser},
-        {Method: "PUT", Path: "/users/:id", Handler: c.UpdateUser},
-        {Method: "DELETE", Path: "/users/:id", Handler: c.DeleteUser},
-    }
+  return []core.RouteDefinition{
+    {Method: "GET", Path: "/users", Handler: c.GetUsers},
+    {Method: "POST", Path: "/users", Handler: c.CreateUser},
+    {Method: "GET", Path: "/users/:id", Handler: c.GetUser},
+    {Method: "PUT", Path: "/users/:id", Handler: c.UpdateUser},
+    {Method: "DELETE", Path: "/users/:id", Handler: c.DeleteUser},
+  }
 }
 ```
 
@@ -275,9 +258,9 @@ func (c *Controller) Routes() []core.RouteDefinition {
 ```go
 // Route: /users/:id/posts/:postId
 func (c *Controller) GetUserPost(ctx *core.Context) error {
-    userId := ctx.Param("id")
-    postId := ctx.Param("postId")
-    // ...
+  userId := ctx.Param("id")
+  postId := ctx.Param("postId")
+  // ...
 }
 ```
 
@@ -285,20 +268,20 @@ func (c *Controller) GetUserPost(ctx *core.Context) error {
 
 ```go
 func LoggingMiddleware(next core.HandlerFunc) core.HandlerFunc {
-    return func(ctx *core.Context) error {
-        start := time.Now()
-        err := next(ctx)
-        log.Printf("%s %s - %v", ctx.Method(), ctx.Path(), time.Since(start))
-        return err
-    }
+  return func(ctx *core.Context) error {
+    start := time.Now()
+    err := next(ctx)
+    log.Printf("%s %s - %v", ctx.Method(), ctx.Path(), time.Since(start))
+    return err
+  }
 }
 
 // Apply to route
 {
-    Method: "GET",
-    Path: "/protected",
-    Handler: c.Protected,
-    Middlewares: []core.MiddlewareFunc{LoggingMiddleware, AuthMiddleware},
+  Method: "GET",
+  Path: "/protected",
+  Handler: c.Protected,
+  Middlewares: []core.MiddlewareFunc{LoggingMiddleware, AuthMiddleware},
 }
 ```
 
@@ -306,11 +289,11 @@ func LoggingMiddleware(next core.HandlerFunc) core.HandlerFunc {
 
 ```go
 app := core.NestFactory{}.Create(
-    &AppModule{},
-    core.WithShutdownTimeout(30 * time.Second),
-    core.WithReadTimeout(10 * time.Second),
-    core.WithWriteTimeout(10 * time.Second),
-    core.WithIdleTimeout(120 * time.Second),
+  &AppModule{},
+  core.WithShutdownTimeout(30 * time.Second),
+  core.WithReadTimeout(10 * time.Second),
+  core.WithWriteTimeout(10 * time.Second),
+  core.WithIdleTimeout(120 * time.Second),
 )
 ```
 
@@ -331,12 +314,12 @@ app.Listen(":3000")  // Blocks until SIGINT or SIGTERM
 
 ```go
 func (c *Controller) Handler(ctx *core.Context) error {
-    if err := doSomething(); err != nil {
-        return ctx.JSON(500, map[string]string{
-            "error": err.Error(),
-        })
-    }
-    return ctx.JSON(200, result)
+  if err := doSomething(); err != nil {
+    return ctx.JSON(500, map[string]string{
+      "error": err.Error(),
+    })
+  }
+  return ctx.JSON(200, result)
 }
 ```
 
@@ -344,17 +327,17 @@ func (c *Controller) Handler(ctx *core.Context) error {
 
 ```go
 func TestController(t *testing.T) {
-    // Create test context
-    req := httptest.NewRequest("GET", "/test", nil)
-    w := httptest.NewRecorder()
-    ctx := core.NewContext(w, req)
-    
-    // Test handler
-    controller := &TestController{}
-    err := controller.GetTest(ctx)
-    
-    assert.NoError(t, err)
-    assert.Equal(t, 200, ctx.StatusCode())
+  // Create test context
+  req := httptest.NewRequest("GET", "/test", nil)
+  w := httptest.NewRecorder()
+  ctx := core.NewContext(w, req)
+  
+  // Test handler
+  controller := &TestController{}
+  err := controller.GetTest(ctx)
+  
+  assert.NoError(t, err)
+  assert.Equal(t, 200, ctx.StatusCode())
 }
 ```
 
