@@ -203,7 +203,7 @@ func main() {
 	fmt.Println("========================================")
 	fmt.Println("GoNest Guards & Security Example")
 	fmt.Println("========================================")
-	fmt.Println("")
+	fmt.Println()
 
 	// Create controllers
 	publicCtrl := NewPublicController()
@@ -216,31 +216,31 @@ func main() {
 	for _, route := range publicCtrl.GetRoutes() {
 		fmt.Printf("  %s %s\n", route.Method, route.Path)
 	}
-	fmt.Println("")
+	fmt.Println()
 
 	fmt.Println("Protected Routes (AuthGuard):")
 	for _, route := range protectedCtrl.GetRoutes() {
 		fmt.Printf("  %s %s\n", route.Method, route.Path)
 	}
-	fmt.Println("")
+	fmt.Println()
 
 	fmt.Println("Admin Routes (AuthGuard + RolesGuard):")
 	for _, route := range adminCtrl.GetRoutes() {
 		fmt.Printf("  %s %s\n", route.Method, route.Path)
 	}
-	fmt.Println("")
+	fmt.Println()
 
 	fmt.Println("Rate Limited Routes (ThrottlerGuard):")
 	for _, route := range rateLimitedCtrl.GetRoutes() {
 		fmt.Printf("  %s %s\n", route.Method, route.Path)
 	}
-	fmt.Println("")
+	fmt.Println()
 
 	// Demonstrate guards
 	fmt.Println("========================================")
 	fmt.Println("Guard Examples:")
 	fmt.Println("========================================")
-	fmt.Println("")
+	fmt.Println()
 
 	// Example 1: AuthGuard
 	fmt.Println("1. AuthGuard:")
@@ -248,19 +248,19 @@ func main() {
 	fmt.Println("   - token-admin (roles: admin, user)")
 	fmt.Println("   - token-user (roles: user)")
 	fmt.Println("   - token-guest (roles: guest)")
-	fmt.Println("")
+	fmt.Println()
 
 	// Example 2: RolesGuard
 	fmt.Println("2. RolesGuard:")
 	fmt.Println("   Admin endpoints require 'admin' role")
 	fmt.Println("   Only token-admin can access")
-	fmt.Println("")
+	fmt.Println()
 
 	// Example 3: ThrottlerGuard
 	fmt.Println("3. ThrottlerGuard:")
 	fmt.Println("   Limit: 5 requests per minute")
 	fmt.Println("   Returns 429 (Too Many Requests) when exceeded")
-	fmt.Println("")
+	fmt.Println()
 
 	fmt.Println("========================================")
 	fmt.Println("Summary:")

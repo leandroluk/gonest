@@ -201,7 +201,7 @@ func main() {
 	fmt.Println("========================================")
 	fmt.Println("GoNest DI Example")
 	fmt.Println("========================================")
-	fmt.Println("")
+	fmt.Println()
 
 	// ========================================
 	// 1. Singleton Providers
@@ -223,7 +223,7 @@ func main() {
 	// UserService - Singleton
 	container.RegisterFactory(NewUserService, di.Singleton())
 	fmt.Println("   ✓ UserService registered (Singleton)")
-	fmt.Println("")
+	fmt.Println()
 
 	// ========================================
 	// 2. Request Scoped Provider
@@ -231,7 +231,7 @@ func main() {
 	fmt.Println("2. Registering Request Scoped Provider...")
 	container.RegisterFactory(NewRequestContext, di.Request())
 	fmt.Println("   ✓ RequestContext registered (Request Scope)")
-	fmt.Println("")
+	fmt.Println()
 
 	// ========================================
 	// 3. Transient Provider
@@ -303,7 +303,7 @@ func main() {
 	// ========================================
 	// 7. Transient Resolution
 	// ========================================
-	fmt.Println("")
+	fmt.Println()
 	fmt.Println("7. Testing Transient Services...")
 
 	handlerType := reflect.TypeOf((*TransientHandler)(nil))
@@ -323,7 +323,7 @@ func main() {
 	// ========================================
 	// 8. Automatic Injection
 	// ========================================
-	fmt.Println("")
+	fmt.Println()
 	fmt.Println("8. Testing Automatic Injection...")
 
 	type Controller struct {

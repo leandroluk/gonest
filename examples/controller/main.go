@@ -158,7 +158,7 @@ func main() {
 	fmt.Println("========================================")
 	fmt.Println("GoNest Controller Example")
 	fmt.Println("========================================")
-	fmt.Println("")
+	fmt.Println()
 
 	// Create controllers
 	userController := NewUserController()
