@@ -3,95 +3,166 @@ package main
 import (
 	"context"
 	"fmt"
+	"time"
 
+	"github.com/leandroluk/gonest/controller"
+	"github.com/leandroluk/gonest/core"
+	"github.com/leandroluk/gonest/pipes"
 	"github.com/leandroluk/gonest/validator"
 	"github.com/leandroluk/gonest/validator/rules"
 )
 
 // ========================================
-// DTOs with Type-Safe Validation
+// PART 1: Basic Validation Examples
 // ========================================
 
-type CreateUserDto struct {
-	Email           string
-	Password        string
-	PasswordConfirm string
-	Age             int
-	Username        string
-	Website         string
-}
+func BasicValidationExamples() {
+	fmt.Println("========================================")
+	fmt.Println("PART 1: Basic Validation")
+	fmt.Println("========================================\n")
 
-// Define validators as package-level variables (compiled once)
-var (
-	emailValidator = validator.Field[string]("email").
-			Is(rules.Required[string]()).
-			Is(rules.Email()).
-			Is(rules.MaxLength(255))
+	// Example 1: Email validation
+	fmt.Println("1. Email Validation:")
+	emailValidator := validator.Field[string]("email").
+		Is(rules.Required[string]()).
+		Is(rules.Email())
 
-	passwordValidator = validator.Field[string]("password").
-				Is(rules.Required[string]()).
-				Is(rules.MinLength(8)).
-				Is(rules.MaxLength(100)).
-				Is(rules.HasUpperCase()).
-				Is(rules.HasLowerCase()).
-				Is(rules.HasDigit())
-
-	ageValidator = validator.Field[int]("age").
-			Is(rules.Required[int]()).
-			Is(rules.Min(18)).
-			Is(rules.Max(120))
-
-	usernameValidator = validator.Field[string]("username").
-				Is(rules.Required[string]()).
-				Is(rules.MinLength(3)).
-				Is(rules.MaxLength(20)).
-				Is(rules.AlphaNumeric())
-
-	websiteValidator = validator.Field[string]("website").
-				Is(rules.URL())
-)
-
-// Validate method using validators
-func (dto *CreateUserDto) Validate() *validator.ValidationResult {
-	result := validator.NewValidationResult()
-
-	// Validate each field
-	if err := emailValidator.Check(dto.Email); err != nil {
-		result.AddError(err)
-	}
-
-	if err := passwordValidator.Check(dto.Password); err != nil {
-		result.AddError(err)
-	}
-
-	if err := ageValidator.Check(dto.Age); err != nil {
-		result.AddError(err)
-	}
-
-	if err := usernameValidator.Check(dto.Username); err != nil {
-		result.AddError(err)
-	}
-
-	if dto.Website != "" { // Optional field
-		if err := websiteValidator.Check(dto.Website); err != nil {
-			result.AddError(err)
+	emails := []string{"test@example.com", "invalid-email", ""}
+	for _, email := range emails {
+		if err := emailValidator.Check(email); err == nil {
+			fmt.Printf("   ✓ '%s': Valid\n", email)
+		} else {
+			fmt.Printf("   ✗ '%s': %s\n", email, err.Message())
 		}
 	}
+	fmt.Println()
 
-	// Cross-field validation
-	if dto.Password != dto.PasswordConfirm {
-		result.AddError(validator.NewFieldError(
-			"passwordConfirm",
-			"match",
-			"Passwords must match",
-		))
+	// Example 2: Age validation
+	fmt.Println("2. Age Validation:")
+	ageValidator := validator.Field[int]("age").
+		Is(rules.Min(18)).
+		Is(rules.Max(120))
+
+	ages := []int{17, 25, 121}
+	for _, age := range ages {
+		if err := ageValidator.Check(age); err == nil {
+			fmt.Printf("   ✓ %d: Valid\n", age)
+		} else {
+			fmt.Printf("   ✗ %d: %s\n", age, err.Message())
+		}
 	}
+	fmt.Println()
 
-	return result
+	// Example 3: Strong password
+	fmt.Println("3. Strong Password:")
+	passwordValidator := validator.Field[string]("password").
+		Is(rules.StrongPassword())
+
+	passwords := []string{"weak", "Strong123!", "NoDigits!"}
+	for _, pwd := range passwords {
+		if err := passwordValidator.Check(pwd); err == nil {
+			fmt.Printf("   ✓ '%s': Strong\n", pwd)
+		} else {
+			fmt.Printf("   ✗ '%s': %s\n", pwd, err.Message())
+		}
+	}
+	fmt.Println()
+
+	// Example 4: Boolean validation
+	fmt.Println("4. Boolean Validation:")
+	termsValidator := validator.Field[bool]("acceptTerms").
+		Is(rules.MustAccept())
+
+	if err := termsValidator.Check(true); err == nil {
+		fmt.Println("   ✓ Terms accepted")
+	}
+	if err := termsValidator.Check(false); err != nil {
+		fmt.Printf("   ✗ Terms not accepted: %s\n", err.Message())
+	}
+	fmt.Println()
 }
 
 // ========================================
-// Using Schema Builder
+// PART 2: Advanced Validation Features
+// ========================================
+
+func AdvancedValidationExamples() {
+	fmt.Println("========================================")
+	fmt.Println("PART 2: Advanced Validation")
+	fmt.Println("========================================\n")
+
+	// Example 1: Conditional validation
+	fmt.Println("1. Conditional Validation:")
+	stockValidator := validator.Field[int]("stock").
+		Is(rules.When(
+			func(val int) bool { return val > 0 },
+			rules.Min[int](1),
+		))
+
+	if err := stockValidator.Check(5); err == nil {
+		fmt.Println("   ✓ Stock 5: Valid")
+	}
+	if err := stockValidator.Check(0); err == nil {
+		fmt.Println("   ✓ Stock 0: Valid (condition not met)")
+	}
+	fmt.Println()
+
+	// Example 2: Array validation
+	fmt.Println("2. Array Validation:")
+	tagsValidator := validator.Field[[]string]("tags").
+		Is(rules.ArrayMinSize[string](1)).
+		Is(rules.ArrayMaxSize[string](5)).
+		Is(rules.ArrayUnique[string]())
+
+	validTags := []string{"tag1", "tag2"}
+	invalidTags := []string{"tag1", "tag1"}
+
+	if err := tagsValidator.Check(validTags); err == nil {
+		fmt.Printf("   ✓ %v: Valid\n", validTags)
+	}
+	if err := tagsValidator.Check(invalidTags); err != nil {
+		fmt.Printf("   ✗ %v: %s\n", invalidTags, err.Message())
+	}
+	fmt.Println()
+
+	// Example 3: Date validation
+	fmt.Println("3. Date Validation:")
+	dateValidator := validator.Field[time.Time]("releaseDate").
+		Is(rules.DateFuture())
+
+	future := time.Now().Add(24 * time.Hour)
+	past := time.Now().Add(-24 * time.Hour)
+
+	if err := dateValidator.Check(future); err == nil {
+		fmt.Println("   ✓ Future date: Valid")
+	}
+	if err := dateValidator.Check(past); err != nil {
+		fmt.Printf("   ✗ Past date: %s\n", err.Message())
+	}
+	fmt.Println()
+
+	// Example 4: Async validation
+	fmt.Println("4. Async Validation:")
+	usernameAsyncValidator := validator.Field[string]("username").
+		Is(rules.Required[string]()).
+		IsAsync(rules.AsyncCustom(
+			func(ctx context.Context, val string) (bool, error) { return val == "taken", nil },
+			"username_taken",
+			"Username is already taken",
+		))
+
+	ctx := context.Background()
+	if err := usernameAsyncValidator.CheckAsync(ctx, "available"); err == nil {
+		fmt.Println("   ✓ 'available': Valid")
+	}
+	if err := usernameAsyncValidator.CheckAsync(ctx, "taken"); err != nil {
+		fmt.Printf("   ✗ 'taken': %s\n", err.Message())
+	}
+	fmt.Println()
+}
+
+// ========================================
+// PART 3: Schema-Based Validation
 // ========================================
 
 type UpdateUserDto struct {
@@ -107,6 +178,7 @@ func init() {
 	builder := validator.NewSchema(&dto)
 
 	builder.Field(&dto.Name,
+		rules.Required[string](),
 		rules.MinLength(2),
 	)
 
@@ -116,313 +188,207 @@ func init() {
 	)
 
 	builder.Field(&dto.Age,
-		rules.Range(18, 120),
+		rules.Min(18),
+		rules.Max(120),
 	)
 
 	updateUserSchema = builder.Build()
 }
 
-// ========================================
-// Custom Validators
-// ========================================
-
-// Custom validator: check if email domain is allowed
-func allowedEmailDomain(allowedDomains []string) validator.Validator[string] {
-	return func(value string) *validator.FieldError {
-		for _, domain := range allowedDomains {
-			if len(value) > len(domain) && value[len(value)-len(domain):] == domain {
-				return nil
-			}
-		}
-
-		err := validator.NewFieldError(
-			"",
-			"email_domain",
-			"Email domain not allowed",
-		)
-		err.WithParam("allowed_domains", allowedDomains)
-		return err
-	}
-}
-
-// Async validator: check if email already exists (simulated)
-func uniqueEmail() validator.ContextValidator[string] {
-	return func(ctx context.Context, value string) *validator.FieldError {
-		// Simulate database check
-		existingEmails := []string{"taken@example.com", "used@example.com"}
-
-		for _, email := range existingEmails {
-			if value == email {
-				return validator.NewFieldError(
-					"",
-					"unique",
-					"Email is already taken",
-				)
-			}
-		}
-
-		return nil
-	}
-}
-
-// ========================================
-// Main Demo
-// ========================================
-
-func main() {
-	ctx := context.Background()
-
+func SchemaValidationExamples() {
 	fmt.Println("========================================")
-	fmt.Println("GoNest Type-Safe Validation Examples")
-	fmt.Println("10 comprehensive examples")
-	fmt.Println("========================================")
+	fmt.Println("PART 3: Schema Validation")
+	fmt.Println("========================================\n")
 
-	// ========================================
-	// Example 1: Valid DTO
-	// ========================================
-	fmt.Println("")
-	fmt.Println("1. Testing VALID DTO...")
-	validDto := &CreateUserDto{
-		Email:           "john@example.com",
-		Password:        "SecurePass123",
-		PasswordConfirm: "SecurePass123",
-		Age:             25,
-		Username:        "johndoe",
-		Website:         "https://example.com",
-	}
-
-	result := validDto.Validate()
-	if result.Valid() {
-		fmt.Println("   ✓ Validation PASSED")
-	} else {
-		fmt.Println("   ✗ Validation FAILED:")
-		for _, err := range result.Errors() {
-			fmt.Printf("     - %s\n", err.Error())
-		}
-	}
-	fmt.Println()
-
-	// ========================================
-	// Example 2: Invalid DTO
-	// ========================================
-	fmt.Println("2. Testing INVALID DTO...")
-	invalidDto := &CreateUserDto{
-		Email:           "invalid-email",
-		Password:        "weak",
-		PasswordConfirm: "different",
-		Age:             15,
-		Username:        "ab",
-		Website:         "not-a-url",
-	}
-
-	result = invalidDto.Validate()
-	if result.Valid() {
-		fmt.Println("   ✓ Validation PASSED")
-	} else {
-		fmt.Printf("   ✗ Validation FAILED (%d errors):\n", result.Count())
-		for _, err := range result.Errors() {
-			fmt.Printf("     - %s: %s (code: %s)\n", err.Field(), err.Message(), err.Code())
-		}
-	}
-	fmt.Println()
-
-	// ========================================
-	// Example 3: Field-by-Field Validation
-	// ========================================
-	fmt.Println("3. Testing Individual Fields...")
-
-	testCases := []struct {
-		name     string
-		value    string
-		expected bool
-	}{
-		{"Valid email", "test@example.com", true},
-		{"Invalid email", "not-an-email", false},
-		{"Empty email", "", false},
-	}
-
-	for _, tc := range testCases {
-		err := emailValidator.Check(tc.value)
-		passed := err == nil
-		status := "✓"
-		if !passed {
-			status = "✗"
-		}
-		fmt.Printf("   %s %s: %v", status, tc.name, passed)
-		if err != nil {
-			fmt.Printf(" (%s)", err.Message())
-		}
-		fmt.Println()
-	}
-	fmt.Println()
-
-	// ========================================
-	// Example 4: Schema Validation
-	// ========================================
-	fmt.Println("4. Testing Schema Validation...")
-	updateDto := &UpdateUserDto{
-		Name:  "John",
+	fmt.Println("1. Valid DTO:")
+	validDto := &UpdateUserDto{
+		Name:  "John Doe",
 		Email: "john@example.com",
 		Age:   30,
 	}
 
-	schemaResult := updateUserSchema.Validate(updateDto)
-	if schemaResult.Valid() {
-		fmt.Println("   ✓ Schema validation PASSED")
-	} else {
-		fmt.Println("   ✗ Schema validation FAILED:")
-		for _, err := range schemaResult.Errors() {
-			fmt.Printf("     - %s\n", err.Error())
+	result := updateUserSchema.Validate(validDto)
+	if result.Valid() {
+		fmt.Println("   ✓ All fields valid")
+	}
+	fmt.Println()
+
+	fmt.Println("2. Invalid DTO:")
+	invalidDto := &UpdateUserDto{
+		Name:  "J",
+		Email: "invalid",
+		Age:   15,
+	}
+
+	result = updateUserSchema.Validate(invalidDto)
+	if result.Invalid() {
+		fmt.Println("   ✗ Validation errors:")
+		for _, err := range result.Errors() {
+			fmt.Printf("     - %s: %s\n", err.Field(), err.Message())
 		}
 	}
 	fmt.Println()
+}
 
-	// ========================================
-	// Example 5: Custom Validators
-	// ========================================
-	fmt.Println("5. Testing Custom Validators...")
+// ========================================
+// PART 4: Pipes Integration
+// ========================================
 
-	domainValidator := validator.Field[string]("email").
-		Is(rules.Required[string]()).
-		Is(allowedEmailDomain([]string{"@company.com", "@partner.com"}))
+type RegisterDto struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+	Age      int    `json:"age"`
+}
 
-	emails := []string{
-		"user@company.com",
-		"admin@partner.com",
-		"external@gmail.com",
-	}
+func (dto *RegisterDto) Validate() *validator.ValidationResult {
+	var temp RegisterDto
+	builder := validator.NewSchema(&temp)
 
-	for _, email := range emails {
-		err := domainValidator.Check(email)
-		if err == nil {
-			fmt.Printf("   ✓ %s: Allowed\n", email)
-		} else {
-			fmt.Printf("   ✗ %s: %s\n", email, err.Message())
-		}
-	}
-	fmt.Println()
+	builder.Field(&temp.Email,
+		rules.Required[string](),
+		rules.Email(),
+	)
 
-	// ========================================
-	// Example 6: Async Validation
-	// ========================================
-	fmt.Println("6. Testing Async Validation...")
+	builder.Field(&temp.Password,
+		rules.Required[string](),
+		rules.StrongPassword(),
+	)
 
-	asyncValidator := validator.Field[string]("email").
-		Is(rules.Required[string]()).
-		Is(rules.Email()).
-		IsAsync(uniqueEmail())
+	builder.Field(&temp.Age,
+		rules.Min(18),
+	)
 
-	testEmails := []string{
-		"new@example.com",
-		"taken@example.com",
-	}
+	schema := builder.Build()
+	return schema.Validate(dto)
+}
 
-	for _, email := range testEmails {
-		err := asyncValidator.CheckAsync(ctx, email)
-		if err == nil {
-			fmt.Printf("   ✓ %s: Available\n", email)
-		} else {
-			fmt.Printf("   ✗ %s: %s\n", email, err.Message())
-		}
-	}
-	fmt.Println()
-
-	// ========================================
-	// Example 7: JSON Error Output
-	// ========================================
-	fmt.Println("7. JSON Error Format...")
-	jsonErrors := result.ToJSON()
-	fmt.Printf("   %+v\n", jsonErrors)
-	fmt.Println()
-
-	// ========================================
-	// Example 8: Numeric Validators
-	// ========================================
-	fmt.Println("8. Testing Numeric Validators...")
-
-	priceValidator := validator.Field[float64]("price").
-		Is(rules.Required[float64]()).
-		Is(rules.Positive[float64]()).
-		Is(rules.Max(9999.99))
-
-	prices := []float64{10.50, -5.00, 10000.00}
-	for _, price := range prices {
-		err := priceValidator.Check(price)
-		if err == nil {
-			fmt.Printf("   ✓ $%.2f: Valid\n", price)
-		} else {
-			fmt.Printf("   ✗ $%.2f: %s\n", price, err.Message())
-		}
-	}
-	fmt.Println()
-
-	// ========================================
-	// Example 9: Strong Password Validator
-	// ========================================
-	fmt.Println("9. Testing Strong Password Validator...")
-
-	strongPasswordValidator := validator.Field[string]("password").
-		Is(rules.StrongPassword())
-
-	passwords := []string{
-		"Weak123",    // No special char
-		"weak123!",   // No uppercase
-		"WEAK123!",   // No lowercase
-		"WeakPass!",  // No digit
-		"Strong123!", // Valid
-	}
-
-	for _, pwd := range passwords {
-		err := strongPasswordValidator.Check(pwd)
-		if err == nil {
-			fmt.Printf("   ✓ '%s': Strong password\n", pwd)
-		} else {
-			fmt.Printf("   ✗ '%s': %s\n", pwd, err.Message())
-		}
-	}
-	fmt.Println()
-
-	// ========================================
-	// Example 10: Boolean Validators
-	// ========================================
-	fmt.Println("10. Testing Boolean Validators...")
-
-	acceptTermsValidator := validator.Field[bool]("acceptTerms").
-		Is(rules.MustAccept())
-
-	isAdultValidator := validator.Field[bool]("isAdult").
-		Is(rules.IsTrue())
-
-	// Test accept terms
-	if err := acceptTermsValidator.Check(true); err == nil {
-		fmt.Println("   ✓ Terms accepted: valid")
-	}
-
-	if err := acceptTermsValidator.Check(false); err != nil {
-		fmt.Printf("   ✗ Terms not accepted: %s\n", err.Message())
-	}
-
-	// Test is adult
-	if err := isAdultValidator.Check(true); err == nil {
-		fmt.Println("   ✓ Is adult: valid")
-	}
-
-	if err := isAdultValidator.Check(false); err != nil {
-		fmt.Printf("   ✗ Not adult: %s\n", err.Message())
-	}
-	fmt.Println()
-
-	// ========================================
-	// Summary
-	// ========================================
+func PipesIntegrationExamples() {
 	fmt.Println("========================================")
-	fmt.Println("Summary:")
-	fmt.Println("✓ Type-safe validation")
-	fmt.Println("✓ Composable validators")
-	fmt.Println("✓ Custom validators")
-	fmt.Println("✓ Async validation")
+	fmt.Println("PART 4: Pipes Integration")
+	fmt.Println("========================================\n")
+
+	fmt.Println("1. ParseIntPipe:")
+	intPipe := pipes.NewParseIntPipe()
+	if result, err := intPipe.Transform("123", nil); err == nil {
+		fmt.Printf("   '123' → %d\n", result)
+	}
+	fmt.Println()
+
+	fmt.Println("2. ParseEnumPipe:")
+	enumPipe := pipes.NewParseEnumPipe("active", "inactive")
+	if result, err := enumPipe.Transform("active", nil); err == nil {
+		fmt.Printf("   'active' → %s ✓\n", result)
+	}
+	if _, err := enumPipe.Transform("invalid", nil); err != nil {
+		fmt.Printf("   'invalid' → ✗ %s\n", err.Error())
+	}
+	fmt.Println()
+
+	fmt.Println("3. ValidationPipe with DTO:")
+	validDto := &RegisterDto{
+		Email:    "user@example.com",
+		Password: "Strong123!",
+		Age:      25,
+	}
+
+	if result := validDto.Validate(); result.Valid() {
+		fmt.Println("   ✓ DTO validation passed")
+	}
+
+	invalidDto := &RegisterDto{
+		Email:    "invalid",
+		Password: "weak",
+		Age:      15,
+	}
+
+	if result := invalidDto.Validate(); result.Invalid() {
+		fmt.Println("   ✗ DTO validation failed:")
+		for _, err := range result.Errors() {
+			fmt.Printf("     - %s\n", err.Message())
+		}
+	}
+	fmt.Println()
+}
+
+// ========================================
+// PART 5: Controller Integration
+// ========================================
+
+func NewValidationController() controller.Controller {
+	ctrl := controller.NewController(
+		controller.WithPrefix("/api"),
+	)
+
+	ctrl.Post("/register", func(ctx *core.Context) error {
+		dto, err := pipes.ValidateBody[RegisterDto](ctx)
+		if err != nil {
+			if validationErr, ok := err.(*pipes.ValidationError); ok {
+				return ctx.JSON(400, validationErr.ToJSON())
+			}
+			return ctx.JSON(400, map[string]any{"error": err.Error()})
+		}
+
+		return ctx.JSON(201, map[string]any{"message": "Registered", "data": dto})
+	})
+
+	ctrl.Get("/users/:id", func(ctx *core.Context) error {
+		intPipe := pipes.NewParseIntPipe()
+		id, err := intPipe.Transform(ctx.Param("id"), ctx)
+		if err != nil {
+			return ctx.JSON(400, map[string]any{"error": "Invalid ID"})
+		}
+
+		return ctx.JSON(200, map[string]any{"id": id})
+	})
+
+	return ctrl
+}
+
+func ControllerIntegrationExample() {
+	fmt.Println("========================================")
+	fmt.Println("PART 5: Controller Integration")
+	fmt.Println("========================================\n")
+
+	ctrl := NewValidationController()
+
+	fmt.Println("Routes:")
+	for _, route := range ctrl.GetRoutes() {
+		fmt.Printf("  %s %s\n", route.Method, route.Path)
+	}
+	fmt.Println("\nFeatures:")
+	fmt.Println("  ✓ Automatic DTO validation")
+	fmt.Println("  ✓ Parse pipes for parameters")
+	fmt.Println("  ✓ Structured error responses")
+	fmt.Println()
+}
+
+// ========================================
+// Main
+// ========================================
+
+func main() {
+	fmt.Println("\n╔════════════════════════════════════════╗")
+	fmt.Println("║  GoNest Complete Validation Examples  ║")
+	fmt.Println("╚════════════════════════════════════════╝\n")
+
+	BasicValidationExamples()
+	AdvancedValidationExamples()
+	SchemaValidationExamples()
+	PipesIntegrationExamples()
+	ControllerIntegrationExample()
+
+	fmt.Println("========================================")
+	fmt.Println("Complete Summary:")
+	fmt.Println("========================================")
+	fmt.Println("✓ 86+ validation rules")
+	fmt.Println("✓ Basic validators (email, password, age)")
+	fmt.Println("✓ Advanced features (conditional, async)")
 	fmt.Println("✓ Schema-based validation")
+	fmt.Println("✓ Array & date validation")
 	fmt.Println("✓ Boolean validation")
-	fmt.Println("✓ Detailed error messages")
-	fmt.Println("========================================")
+	fmt.Println("✓ Parse pipes (int, float, bool, enum)")
+	fmt.Println("✓ ValidationPipe integration")
+	fmt.Println("✓ Controller integration")
+	fmt.Println("✓ Type-safe & composable")
+	fmt.Println("========================================\n")
 }
